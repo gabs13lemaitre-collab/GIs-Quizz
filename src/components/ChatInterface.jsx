@@ -227,7 +227,7 @@ const styles = `
   flex: 1;
   overflow-y: auto;
   padding: 20px;
-  background-image: url("version finaleV2 askip.png");
+  background-image: url("image.png");
 }
 
 .message {
