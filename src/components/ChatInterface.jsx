@@ -207,7 +207,7 @@ const styles = `
 }
 
 .chat-header {
-  background-color: #3181C7;
+  background-color: #317ec7ff;
   color: white;
   padding: 20px;
   text-align: center;
@@ -227,7 +227,7 @@ const styles = `
   flex: 1;
   overflow-y: auto;
   padding: 20px;
-  background-image: url("../version finaleV2 askip.png");
+  background-image: url("version finaleV2 askip.png");
 }
 
 .message {
@@ -344,7 +344,7 @@ const styles = `
 }
 
 .feedback.correct {
-  background: #e8f5e9;
+  background: #005207ff;
   color: #2e7d32;
 }
 
