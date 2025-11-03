@@ -7,6 +7,7 @@ const ChatInterface = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [qcmMode, setQcmMode] = useState(null);
+  const [historiqueConversation, setHistoriqueConversation] = useState([]); // ✅ AJOUT: État pour l'historique
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -30,7 +31,10 @@ const ChatInterface = () => {
       const response = await fetch('/api/qcm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sujet: userInput })
+        body: JSON.stringify({ 
+          sujet: userInput,
+          historique: historiqueConversation // ✅ MODIFICATION: Envoie l'historique
+        })
       });
       
       const data = await response.json();
@@ -47,6 +51,9 @@ const ChatInterface = () => {
           userAnswer: null,
           done: false
         });
+        
+        // ✅ MODIFICATION: Met à jour l'historique avec la nouvelle conversation
+        setHistoriqueConversation(data.historique || []);
       } else {
         throw new Error(data.error || 'Erreur du serveur');
       }

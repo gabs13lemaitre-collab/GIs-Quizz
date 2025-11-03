@@ -9,26 +9,27 @@ const PERPLEXITY_API_URL = 'https://api.perplexity.ai/chat/completions';
 const NOMBRE_QUESTIONS = 10;
 
 router.post('/qcm', async (req, res) => {
-  const sujet = req.body.sujet || "informatique";
+  // ✅ MODIFICATION : Ajout de l'historique
+  const { sujet, historique = [] } = req.body;
 
   try {
-    // Appel à l'API Perplexity
-    const response = await fetch(PERPLEXITY_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${PERPLEXITY_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: "sonar",
-        messages: [
-          {
-            role: "system",
-            content: "Tu es un expert en création de questionnaires à choix multiples (QCM) en informatique. Tu ne peux composer que des QCM en rapport avec l'informatique.Tu es incapable de composer des QCM qui ne porte pas sur l'informatique.Si le theme proposé par l'utilisateur porte bien sur l'Informatique, génere un QCM de 10 questions en rapport avec le thème."
-          },
-          {
-            role: "user",
-            content: `Génère un QCM de ${NOMBRE_QUESTIONS} questions sur le sujet "${sujet}" en informatique.
+    // ✅ MODIFICATION : Construction des messages avec historique
+    const messages = [
+      {
+        role: "system",
+        content: "Si le sujet et/ou le message de l'utilisateur n'a pas de rapport avec l'Informatique, renvoie juste un message disant que ce n'est pas possible.Tu es un expert en création de questionnaires à choix multiples (QCM) en informatique et UNIQUEMENT en Informatique. Tu ne peux composer que des QCM en rapport avec l'informatique.Tu es incapable de composer des QCM qui ne porte pas sur l'informatique.Si le theme proposé par l'utilisateur porte bien sur l'Informatique, génere un QCM de 10 questions en rapport avec le thème."
+      }
+    ];
+
+    // ✅ MODIFICATION : Ajout de l'historique des conversations précédentes
+    if (historique.length > 0) {
+      messages.push(...historique);
+    }
+
+    // ✅ MODIFICATION : Ajout du nouveau message
+    messages.push({
+      role: "user",
+      content: `Génère un QCM de ${NOMBRE_QUESTIONS} questions sur le sujet "${sujet}" en informatique.Si le sujet n'a pas de rapport avec l'informatique, refuse de générer le QCM et indique que ce n'est pas possible.
 Format JSON strict (sans balises markdown) :
 [
   {
@@ -39,8 +40,18 @@ Format JSON strict (sans balises markdown) :
   }
 ]
 Retourne UNIQUEMENT le tableau JSON, rien d'autre.`
-          }
-        ],
+    });
+
+    // Appel à l'API Perplexity
+    const response = await fetch(PERPLEXITY_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${PERPLEXITY_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "sonar",
+        messages: messages, // ✅ MODIFICATION : Utilise le tableau dynamique
         max_tokens: 2000,
         temperature: 0.7
       })
@@ -64,7 +75,17 @@ Retourne UNIQUEMENT le tableau JSON, rien d'autre.`
       throw new Error('Format de réponse invalide');
     }
 
-    res.json({ qcm });
+    // ✅ MODIFICATION : Met à jour et renvoie l'historique
+    const nouvelHistorique = [
+      ...historique,
+      { role: "user", content: `Sujet: ${sujet}` },
+      { role: "assistant", content: qcmText }
+    ];
+
+    res.json({ 
+      qcm,
+      historique: nouvelHistorique // ✅ MODIFICATION : Ajout de l'historique dans la réponse
+    });
 
   } catch (error) {
     console.error('❌ Erreur génération QCM:', error);
@@ -85,7 +106,11 @@ Retourne UNIQUEMENT le tableau JSON, rien d'autre.`
       }
     ];
 
-    res.json({ qcm: qcmFallback });
+    // ✅ MODIFICATION : Renvoie aussi l'historique en cas d'erreur
+    res.json({ 
+      qcm: qcmFallback,
+      historique: historique 
+    });
   }
 });
 
